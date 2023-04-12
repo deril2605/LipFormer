@@ -1,5 +1,7 @@
 import os
 import cv2
+import sys
+import warnings
 import tensorflow as tf
 import numpy as np
 from typing import List
@@ -9,6 +11,9 @@ import gdown
 from tensorflow.keras.callbacks import ModelCheckpoint, LearningRateScheduler
 from tensorflow.keras.optimizers.legacy import Adam
 from utils import define_vocab_mapping, load_data, mappable_function, get_model, CTCLoss
+
+warnings.filterwarnings('ignore')
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 vocab = [x for x in "abcdefghijklmnopqrstuvwxyz'?!123456789 "] # all set of characters in dataset
 char_to_num, num_to_char = define_vocab_mapping(vocab)
@@ -99,6 +104,20 @@ def train():
 
     model.fit(train, validation_data=test, epochs=100, callbacks=[checkpoint_callback, schedule_callback, example_callback])
 
+def predict():
+    model = get_model(char_to_num)
+    model.load_weights('models/checkpoint')
+
+    sample = load_data(tf.convert_to_tensor('data/s1/pbap1a.mpg'))
+
+    print('~'*100, 'REAL TEXT')
+    print([tf.strings.reduce_join([num_to_char(word) for word in sentence]) for sentence in [sample[1]]])
+    
+    yhat = model.predict(tf.expand_dims(sample[0], axis=0))
+    decoded = tf.keras.backend.ctc_decode(yhat, input_length=[75], greedy=True)[0][0].numpy()
+    print('~'*100, 'PREDICTIONS')
+    print([tf.strings.reduce_join([num_to_char(word) for word in sentence]) for sentence in decoded])
+
 def main(argv):
 
     # configure GPU if available
@@ -108,12 +127,13 @@ def main(argv):
     except:
         pass
 
-    type = "train" # set the mode to either ["train", "test"]
+    type = "predict" # set the mode to either ["train", "predict"]
 
     if type == "train":
-        pass
+        train()
+
     elif type == "predict":
-        pass
+        predict()
 
     return
 

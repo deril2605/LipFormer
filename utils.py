@@ -4,6 +4,8 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential 
 from tensorflow.keras.layers import LSTM, Dense, MaxPool3D, Conv3D, TimeDistributed, Flatten, Dropout, Bidirectional
 
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+
 def load_video(path):
     """
     Helper function to load a video sequentially as frames and standardize them
@@ -33,7 +35,7 @@ def define_vocab_mapping(vocab):
     )
     return character_to_num, num_to_character
 
-def load_align(path):
+def load_align(path, char_to_num):
     """
     Helper function to load an alignment and map it with the vocabulary defined
     """
@@ -55,7 +57,7 @@ def load_data(path):
     video_path = os.path.join('data','s1',f'{file_name}.mpg')
     align_path = os.path.join('data','alignments','s1',f'{file_name}.align')
     frames = load_video(video_path)
-    alignments = load_align(align_path)
+    alignments = load_align(align_path, char_to_num)
     return frames, alignments[0:40] # trim alignments to 40 window
 
 def mappable_function(path):
@@ -105,3 +107,6 @@ def CTCLoss(y_true, y_pred):
 
     loss = tf.keras.backend.ctc_batch_cost(y_true, y_pred, input_length, label_length)
     return loss
+
+vocab = [x for x in "abcdefghijklmnopqrstuvwxyz'?!123456789 "] # all set of characters in dataset
+char_to_num, num_to_char = define_vocab_mapping(vocab)
