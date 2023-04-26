@@ -105,19 +105,20 @@ def train():
     model.fit(train, validation_data=test, epochs=100, callbacks=[checkpoint_callback, schedule_callback, example_callback])
 
 def predict():
-    model = get_model(char_to_num)
-    model.load_weights('models/checkpoint')
+    model = get_model(char_to_num, load_weights = True)
 
-    sample = load_data(tf.convert_to_tensor('data/s1/pbap1a.mpg'))
+    sample = load_data(tf.convert_to_tensor('test_data/pgwr5s.mpg'))
 
-    print('~'*100, 'REAL TEXT')
-    print([tf.strings.reduce_join([num_to_char(word) for word in sentence]) for sentence in [sample[1]]])
+    real = [tf.strings.reduce_join([num_to_char(word) for word in sentence]) for sentence in [sample[1]]]
+    real = real[0].numpy().decode('utf-8').strip('sil').strip()
     
     yhat = model.predict(tf.expand_dims(sample[0], axis=0))
     decoded = tf.keras.backend.ctc_decode(yhat, input_length=[75], greedy=True)[0][0].numpy()
+    pred = [tf.strings.reduce_join([num_to_char(word) for word in sentence]).numpy().decode('utf-8') for sentence in decoded]
+    print('~'*100, 'REAL TEXT')
+    print(real)
     print('~'*100, 'PREDICTIONS')
-    print([tf.strings.reduce_join([num_to_char(word) for word in sentence]) for sentence in decoded])
-
+    print(pred[0])
 def main(argv):
 
     # configure GPU if available

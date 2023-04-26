@@ -67,7 +67,7 @@ def mappable_function(path):
     result = tf.py_function(load_data, [path], (tf.float32, tf.int64))
     return result
 
-def get_model(char_to_num):
+def get_model(char_to_num, load_weights = False):
     model = Sequential()
     model.add(Conv3D(128, 3, input_shape=(75,46,140,1), padding='same', activation = 'relu'))
     model.add(MaxPool3D((1,2,2)))
@@ -87,7 +87,8 @@ def get_model(char_to_num):
     model.add(Dropout(.5))
 
     model.add(Dense(char_to_num.vocabulary_size()+1, kernel_initializer='he_normal', activation='softmax'))
-
+    if load_weights:
+        model.load_weights('models/checkpoint')
     return model
 
 def CTCLoss(y_true, y_pred):
