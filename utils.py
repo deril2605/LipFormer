@@ -1,3 +1,4 @@
+# import libraries
 import os
 import cv2
 import tensorflow as tf
@@ -68,6 +69,9 @@ def mappable_function(path):
     return result
 
 def get_model(char_to_num, load_weights = False):
+    """
+    Define the model architecture, also has a parameter to load the weights if asked.
+    """
     model = Sequential()
     model.add(Conv3D(128, 3, input_shape=(75,46,140,1), padding='same', activation = 'relu'))
     model.add(MaxPool3D((1,2,2)))

@@ -1,3 +1,4 @@
+# import libraries
 import os
 import cv2
 import sys
@@ -15,6 +16,7 @@ from utils import define_vocab_mapping, load_data, mappable_function, get_model,
 warnings.filterwarnings('ignore')
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
+# define vocabulary for model output
 vocab = [x for x in "abcdefghijklmnopqrstuvwxyz'?!123456789 "] # all set of characters in dataset
 char_to_num, num_to_char = define_vocab_mapping(vocab)
 
@@ -35,6 +37,10 @@ class ProduceExample(tf.keras.callbacks.Callback):
             print('~'*100)
 
 def download_data():
+    """
+    Downloads the video and aligment data from google drive if not found
+    It is skipped if the data/ is already present.
+    """
     if not os.path.exists('data.zip'):
         url = 'https://drive.google.com/uc?id=1m5J8VO-7uK3BmaYEh1nX2JBHP35axsh-'
         output = 'data.zip'
@@ -43,6 +49,9 @@ def download_data():
     return 0
 
 def visualize_data(path, num_to_char):
+    """
+    Used to visualize how a normalized frame looks like that is fed to the network.
+    """
     frames, alignments = load_data(tf.convert_to_tensor(path))
     plt.imshow(frames[45])
     plt.savefig('resources/sample_frame.png', dpi=100)
@@ -50,7 +59,11 @@ def visualize_data(path, num_to_char):
     print(tf.strings.reduce_join([bytes.decode(x) for x in num_to_char(alignments.numpy()).numpy()]))
 
 def train():
-    download_data()
+    """
+    Training function that first loads the data, creates the data pipeline and defines and fits the
+    model.
+    """
+    download_data() # download if data isn't available on local system.
 
     visualize_data('data/s1/pwad3s.mpg', num_to_char)
 
@@ -83,7 +96,7 @@ def train():
     # (75, 46, 140, 1)
     # 75 frames, 46 height of each frame, 140 width of each frame, 1 color channel
 
-    model = get_model(char_to_num)
+    model = get_model(char_to_num) # load the model structure.
     print(model.summary())
 
     def scheduler(epoch, lr):
@@ -105,6 +118,10 @@ def train():
     model.fit(train, validation_data=test, epochs=100, callbacks=[checkpoint_callback, schedule_callback, example_callback])
 
 def predict():
+    """
+    Function to predict data for a single video sequence, it gets the model, loads the weight 
+    and displays the original and predicted text.
+    """
     model = get_model(char_to_num, load_weights = True)
 
     sample = load_data(tf.convert_to_tensor('test_data/pgwr5s.mpg'))
@@ -119,8 +136,11 @@ def predict():
     print(real)
     print('~'*100, 'PREDICTIONS')
     print(pred[0])
-def main(argv):
 
+def main(argv):
+    """
+    Main function that is called when the script is run.
+    """
     # configure GPU if available
     physical_devices = tf.config.list_physical_devices('GPU')
     try:
